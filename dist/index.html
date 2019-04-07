@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>todo</title>
+</head>
+
+<body>
+    <main class="container" id="container">
+        <header>
+            <h1>Your Todo</h1>
+            <h3>Create your task list for a future</h3>
+        </header>
+        <form>
+            <div class="wrap">
+                <input type="text" placeholder="Name" id="name" autocomplete="off" required>
+                <div class="date-wrap">
+                    <div>When:</div>
+                    <input type="date" id="date" required>
+                </div>
+            </div>
+            <div class="wrap">
+                <input type="text" id="task" required autocomplete="off" placeholder="Add your to-do..">
+                <input type="submit" value="Add">
+            </div>
+        </form>
+        <div class="warn" id="warn"></div>
+        <div class="sort">
+            <span>Sort by:</span>
+            <div>
+                <button id="sortByDate">Date</button>
+                <button id="sortByName">Name</button>
+            </div>
+        </div>
+        <div id="items"></div>
+    </main>
+<script type="text/javascript" src="bundle.js"></script></body>
+
+</html>
