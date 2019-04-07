@@ -1,37 +1,32 @@
 require('./assets/style.scss');
+require('./assets/media.scss');
 
 let q = document.querySelector.bind(document);
 let qa = document.querySelectorAll.bind(document);
 
-let id;
-window.onload = () => {
-    let todos = JSON.parse(localStorage.getItem('todos'));
-    todos ? id = todos.length : id = 0;
+let id = 0, todos = [], form = q('form'),
+    cont = q('#container'), input = q('#task'),
+    warn = q('#warn'), name = q('#name'),
+    date = q('#date'), sortName = q('#sortByName'),
+    sortDate = q('#sortByDate');
 
-    for (let item in todos) {
-        // if (todos[item].value){
-        renderItem(todos[item].value, todos[item].id, todos[item].date, todos[item].name, todos[item].status);
-        toLS(todos[item].value, todos[item].id, todos[item].date, todos[item].name);
-        // }
-    }
+window.onload = () => {
+    let todosLS = JSON.parse(localStorage.getItem('todos'));
+    if (todosLS) {
+        todosLS.forEach(todo=>todos.push(todo)),
+        id = todosLS.length,
+        render(todosLS),
+        toLS(todosLS)
+    }   
 }
 
-
-let form = q('form');
-let cont = q('#container');
-let input = q('#task');
-let warn = q('#warn');
-let name = q('#name');
-let date = q('#date');
-let sortName = q('#sortByName');
-let sortDate = q('#sortByDate');
-
-var today = new Date();
-var dd = String(today.getDate()).padStart(2, '0');
-var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-var yyyy = today.getFullYear();
+let today = new Date();
+let dd = String(today.getDate()).padStart(2, '0');
+let mm = String(today.getMonth() + 1).padStart(2, '0');
+let yyyy = today.getFullYear();
 today = yyyy + '-' + mm + '-' + dd;
 date.setAttribute("min", today);
+date.value = today;
 
 class Task {
     constructor(value, id, date, name, status) {
@@ -42,7 +37,6 @@ class Task {
         this.status = status || 'soon';
     }
 }
-let todos = [];
 
 form.addEventListener("submit", () => {
     event.preventDefault();
@@ -57,66 +51,41 @@ form.addEventListener("submit", () => {
     } else {
         warn.innerHTML = '';
         warn.classList.remove('open');
-        renderItem(input.value, id, date.value, name.value);
-        toLS(input.value, id, date.value, name.value)
+        let newTask = new Task(input.value, id, date.value, name.value, status);
+        todos.push(newTask);
+        render(todos);
+        toLS(todos);
         id++;
         input.value = '';
-        name.value = '';
     }
 })
 
 
-let toLS = (value, id, date, name) => {
-    let newTask = new Task(value, id, date, name);
-    todos.push(newTask);
+let toLS = (todos) => {
     localStorage.removeItem('todos');
     localStorage.setItem('todos', JSON.stringify(todos));
 }
-
-let renderItem = (value, id, date, name, status) => {
-    let task = document.createElement('div');
-    let textNode = document.createElement('span');
-    let mainNodeWrap = document.createElement('div');
-    let descNode = document.createElement('div');
-    let statusesNode = document.createElement('div');
-    let statusWaiting = document.createElement('span');
-    let statusExecuting = document.createElement('span');
-    let statusDone = document.createElement('span');
-
-
-    statusWaiting.innerHTML = 'soon';
-    statusExecuting.innerHTML = 'executing';
-    statusDone.innerHTML = 'done';
-    textNode.innerHTML = value;
-    descNode.innerHTML = `${name} (${date})`;
-    descNode.classList.add('description-node')
-
-    if (!status || status === statusWaiting.innerHTML) {
-        statusWaiting.classList.add('selected')
-    } else if (status === statusExecuting.innerHTML) {
-        statusExecuting.classList.add('selected')
-    } else if (status === statusDone.innerHTML) {
-        statusDone.classList.add('selected')
-    }
-
-    task.classList.add('item');
-    task.id = id;
-    statusesNode.appendChild(statusWaiting);
-    statusesNode.appendChild(statusExecuting);
-    statusesNode.appendChild(statusDone);
-    descNode.appendChild(statusesNode);
-    task.appendChild(descNode);
-    mainNodeWrap.appendChild(textNode);
-    cont.appendChild(task);
-
-    let edit = document.createElement('div');
-    edit.classList.add('edit');
-
-    let del = document.createElement('div');
-    del.classList.add('delete');
-    mainNodeWrap.appendChild(del);
-    mainNodeWrap.appendChild(edit);
-    task.appendChild(mainNodeWrap);
+let render = (todos) => {
+    let todosList = `${todos.map((todo, i) => `
+          <div class="item" id=${todo.id}>
+            <div class="description-node">
+            <span class="desc">${todo.name} (${todo.date})</span>
+            <div>
+                <span ${todo.status === 'soon' ? 'class="selected"' : ''}>soon</span>
+                <span ${todo.status === 'executing' ? 'class="selected"' : ''}>executing</span>
+                <span ${todo.status === 'done' ? 'class="selected"' : ''}>done</span>
+            </div>
+            </div>
+            <div class="content">
+                <span>${todo.value}</span>
+                <div class="delete"></div>
+                <div class="edit"></div>
+            </div>
+            <span class="counter">${i+1}</span>
+          </div>
+          </div>
+        `).join('')}`;
+    items.innerHTML = todosList;
 }
 
 cont.addEventListener('click', (e) => {
@@ -127,8 +96,9 @@ cont.addEventListener('click', (e) => {
         for (let i = 0; i < todos.length; i++) {
             todos[i].id = i;
         }
-        localStorage.removeItem('todos');
-        localStorage.setItem('todos', JSON.stringify(todos));
+        qa('.item').forEach(item=>item.remove());
+        render(todos);
+        toLS(todos);
         item.remove();
         id--;
         let items = qa('.item');
@@ -147,16 +117,15 @@ cont.addEventListener('click', (e) => {
 
         let submit = document.createElement('div');
         submit.classList.add('edit-submit');
-        item.appendChild(input);
-        item.appendChild(submit);
+        item.children[1].appendChild(input);
+        item.children[1].appendChild(submit);
     } else if (e.target.classList.value === 'edit-submit') {
         let input = q('.edit-input');
         let edited = input.value;
-        e.path[1].children[1].children[0].innerHTML = edited;
-        todos[e.path[1].id].value = edited;
-        e.path[1].children[1].children[2].classList.add('edited');
-        localStorage.removeItem('todos');
-        localStorage.setItem('todos', JSON.stringify(todos));
+        e.path[1].children[0].innerHTML = edited;
+        todos[e.path[2].id].value = edited;
+        e.path[1].children[2].classList.add('edited');
+        toLS(todos);
         q('.edit-submit').remove();
         input.remove();
     } else if (e.target.innerHTML === 'soon' || e.target.innerHTML === 'executing' || e.target.innerHTML === 'done') {
@@ -165,21 +134,15 @@ cont.addEventListener('click', (e) => {
         }
         todos[e.path[1].parentNode.parentNode.id].status = e.target.innerHTML;
         e.target.classList.add('selected');
-        localStorage.removeItem('todos');
-        localStorage.setItem('todos', JSON.stringify(todos));
+        toLS(todos);
     }
 })
 
 sortDate.addEventListener('click', () => {
-    todos.sort((a, b)=>  new Date(a.date) - new Date(b.date));
-    qa('.item').forEach(el => {
-        el.remove();
-    });
-    todos.forEach(task => {
-        renderItem(task.value, task.id, task.date, task.name, task.status)
-    })
-    localStorage.removeItem('todos');
-    localStorage.setItem('todos', JSON.stringify(todos));
+    todos.sort((a, b) => new Date(a.date) - new Date(b.date));
+    qa('.item').forEach(el => el.remove());
+    render(todos)
+    toLS(todos);
 })
 
 sortName.addEventListener('click', () => {
@@ -189,12 +152,8 @@ sortName.addEventListener('click', () => {
         if (nameA > nameB) return 1;
         return 0;
     });
-    qa('.item').forEach(el => {
-        el.remove();
-    });
-    todos.forEach(task => {
-        renderItem(task.value, task.id, task.date, task.name, task.status)
-    })
-    localStorage.removeItem('todos');
-    localStorage.setItem('todos', JSON.stringify(todos));
+    qa('.item').forEach(el => el.remove());
+
+    render(todos);
+    toLS(todos);
 })

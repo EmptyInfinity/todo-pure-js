@@ -1,0 +1,19 @@
+@media all and (min-width: 992px) {
+  body{
+      font-size: 14px !important;
+      .wrap {
+      &:first-child {
+        flex-direction: row !important;
+        input[type="text"] {
+          border-radius: 43px 0 0 43px !important;
+          margin-bottom: 0 !important;
+        }
+        .date-wrap {
+          div {
+            border-radius: 0 !important;
+          }
+        }
+      }
+    }
+  }
+}
